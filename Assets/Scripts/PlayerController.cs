@@ -1,15 +1,15 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class Controller : MonoBehaviour
+public class PlayerController : MonoBehaviour
 {
-    private InputSystem_Actions controls;   // Référence au nouveau système d'Input
+    private InputSystem_Actions controls;   // Rï¿½fï¿½rence au nouveau systï¿½me d'Input
     private Rigidbody rb;                   // le rigidbody de la capsule
-    private Vector2 moveInput;              // la valeur de mouvement retournée par le système d'Input
+    private Vector2 moveInput;              // la valeur de mouvement retournï¿½e par le systï¿½me d'Input
     private bool isGrounded;                // sommes-nous au sol ?
     private bool firstJump;                 // est-ce le premier saut ?
     private bool secondJump;                // est-ce le second saut ?
-    private float speed = 1f;               // vitesse de déplacement pour normal et "sprint"
+    private float speed = 1f;               // vitesse de dï¿½placement pour normal et "sprint"
     [SerializeField]
     private GameObject leftArm;             // bras gauche pour l'animation
     [SerializeField]
@@ -17,7 +17,7 @@ public class Controller : MonoBehaviour
 
     private void Awake()
     {
-        // Instancie le système d'Input
+        // Instancie le systï¿½me d'Input
         controls = new InputSystem_Actions();
     }
 
@@ -25,7 +25,7 @@ public class Controller : MonoBehaviour
     {
         controls.Player.Enable(); // Activer l'Action Map "Player"
         controls.Player.Move.performed += OnMove; // Mouvement
-        controls.Player.Move.canceled += OnMoveCancel; // Arrêt du mouvement
+        controls.Player.Move.canceled += OnMoveCancel; // Arrï¿½t du mouvement
         controls.Player.Jump.performed += OnJump; // Saut
         controls.Player.Sprint.performed += OnSprint;
         controls.Player.Sprint.canceled += OnSprintCancelled;
@@ -49,7 +49,9 @@ public class Controller : MonoBehaviour
     private void OnMove(InputAction.CallbackContext context)
     {
         moveInput = context.ReadValue<Vector2>();
+        //Debug.Log("Move reÃ§u : " + moveInput);
     }
+
     private void OnMoveCancel(InputAction.CallbackContext context)
     {
         // on donne un vecteur nul pour arreter le mouvement
@@ -63,9 +65,8 @@ public class Controller : MonoBehaviour
             rb.AddForce(Vector3.up * 6, ForceMode.Impulse);
             isGrounded = false;
             firstJump = true;
-            leftArm.transform.rotation = Quaternion.Euler(0f, 0f, -45f); // Tourne de -45° autour de Z
-            rightArm.transform.rotation = Quaternion.Euler(0f, 0f, 45f);   // idem 45° pour bras droit
-            Debug.Log($"rb.linearVelocity.magnitude = {rb.linearVelocity.magnitude}");
+            leftArm.transform.rotation = Quaternion.Euler(0f, 0f, -45f); // Tourne de -45ï¿½ autour de Z
+            rightArm.transform.rotation = Quaternion.Euler(0f, 0f, 45f);   // idem 45ï¿½ pour bras droit
         }
         else
             if(firstJump && !secondJump)
@@ -84,44 +85,54 @@ public class Controller : MonoBehaviour
 
     private void OnSprintCancelled(InputAction.CallbackContext context)
     {
-        // on remet la vitesse de base qd le "sprint" est terminé/bouton relaché
+        // on remet la vitesse de base qd le "sprint" est terminï¿½/bouton relachï¿½
         speed = 1f;
     }
 
     void Update()
     {
-        // comme le clavier gère x et y en déplacement, mais qu'en 3D les déplacemments se font en x et z (gauche, droite, avance, recule)
+        // comme le clavier gï¿½re x et y en dï¿½placement, mais qu'en 3D les dï¿½placemments se font en x et z (gauche, droite, avance, recule)
         // alors on met la valeur de y dans l'emplacement/l'axe de z ci-dessous
-        Vector3 movement = new Vector3(moveInput.x * speed, 0, moveInput.y * speed);
-        transform.Translate(movement * Time.deltaTime);
+        //Vector3 movement = new Vector3(moveInput.x * speed, 0, moveInput.y * speed);
+        //transform.Translate(movement * Time.deltaTime);
+        Vector3 localVelocity = transform.InverseTransformDirection(rb.linearVelocity);
+        // si la velocitÃ© est infÃ©rieure Ã  -1 (pour Ã©viter les valeurs entre 0 et -1) alors la capsule tombe, on modifie la rotation 
+        // des bras pour donner une impression de chute / d'aterrissage
+        if(localVelocity.y < -1f)
+        {
+            Debug.Log("Vitesse verticale locale : " + localVelocity.y);
+            leftArm.transform.rotation = Quaternion.Euler(0f, 0f, 45f); // Tourne de -45ï¿½ autour de Z
+            rightArm.transform.rotation = Quaternion.Euler(0f, 0f, -45f);   // idem 45ï¿½ pour bras droit
+
+        }
     }
 
-    /*
     void FixedUpdate()
     {
-        Vector3 movement = new Vector3(moveInput.x, 0, moveInput.y);
-        Vector3 newPosition = rb.position + movement * Time.fixedDeltaTime * 5f;
-        rb.MovePosition(newPosition);
+        Vector3 move = new Vector3(moveInput.x, 0, moveInput.y);
+        rb.MovePosition(rb.position + move * speed * Time.fixedDeltaTime);
+        //Debug.Log("FixedUpdate exÃ©cutÃ© : move = " + moveInput);
+        //if (rb.linearVelocity.magnitude > 0.2f)
+            //Debug.Log($"rb.linearVelocity.m = {rb.linearVelocity.magnitude}");
     }
-    */
 
     private void OnCollisionEnter(Collision collision)
     {
-        // permet d'activer le saut après une détection du sol en contact avec la capsule
+        // permet d'activer le saut aprï¿½s une dï¿½tection du sol en contact avec la capsule
         if(collision.gameObject.CompareTag("Plane"))
         {
             isGrounded = true;
             firstJump = false;
             secondJump = false;
-            // les bras se mettent "droits"/straight
-            leftArm.transform.rotation = Quaternion.Euler(0f, 0f, 90f); // Tourne de 90° autour de Z
+            // les bras se mettent "droits"/straight quand on est au zol
+            leftArm.transform.rotation = Quaternion.Euler(0f, 0f, 90f); // Tourne de 90ï¿½ autour de Z
             rightArm.transform.rotation = Quaternion.Euler(0f, 0f, 90f);
         }
     }
 
     void OnDrawGizmos()
     {
-        // visible uniquement dans la scène
+        // visible uniquement dans la scï¿½ne
         Gizmos.color = isGrounded ? Color.green : Color.red;
         Gizmos.DrawWireSphere(transform.position, 1f);
     }
