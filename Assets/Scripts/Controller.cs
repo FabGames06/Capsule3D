@@ -63,8 +63,9 @@ public class Controller : MonoBehaviour
             rb.AddForce(Vector3.up * 6, ForceMode.Impulse);
             isGrounded = false;
             firstJump = true;
-            leftArm.transform.rotation = Quaternion.Euler(0f, 0f, 45f); // Tourne de 45° autour de Z
-            rightArm.transform.rotation = Quaternion.Euler(0f, 0f, -45f);   // idem -45° pour bras droit
+            leftArm.transform.rotation = Quaternion.Euler(0f, 0f, -45f); // Tourne de -45° autour de Z
+            rightArm.transform.rotation = Quaternion.Euler(0f, 0f, 45f);   // idem 45° pour bras droit
+            Debug.Log($"rb.linearVelocity.magnitude = {rb.linearVelocity.magnitude}");
         }
         else
             if(firstJump && !secondJump)
